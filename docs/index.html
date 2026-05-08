@@ -281,11 +281,22 @@ function pills(id,items,cc,sel,cb){
   el.onclick=function(e){const t=e.target.closest('.p');if(!t)return;el.querySelectorAll('.p').forEach(x=>x.classList.remove('on'));t.classList.add('on');cb(+t.dataset.i)};
 }
 
+function availGrades(examId){
+  const d=EX[examId||S.exam];if(!d)return['1','2','3'];
+  return['1','2','3'].filter(g=>(d.data[g]||[]).length>0);
+}
 function buildF(){
   const examItems=ORD.map(e=>(EX[e]||{}).label||e);
   const examIdx=ORD.indexOf(S.exam);
-  pills('fe',examItems,'bl',examIdx>=0?examIdx:0,i=>{S.exam=ORD[i];S.c=0;buildF();update()});
-  pills('fg',['1학년','2학년','3학년'],'co',+S.g-1,i=>{S.g=''+(i+1);S.c=0;S.s=0;buildF();update()});
+  pills('fe',examItems,'bl',examIdx>=0?examIdx:0,i=>{
+    S.exam=ORD[i];
+    const av=availGrades(ORD[i]);
+    if(!av.includes(S.g))S.g=av[0]||'1';
+    S.c=0;buildF();update()
+  });
+  const av=availGrades();
+  const gIdx=av.indexOf(S.g);
+  pills('fg',av.map(g=>g+'학년'),'co',gIdx>=0?gIdx:0,i=>{S.g=av[i];S.c=0;S.s=0;buildF();update()});
   const cc=cls();
   pills('fc',['전체',...cc.map(c=>c+'반')],'te',S.c,i=>{S.c=i;update()});
   const ss=subs();if(S.s>=ss.length)S.s=0;
