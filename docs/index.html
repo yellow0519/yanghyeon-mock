@@ -116,6 +116,11 @@ table.rk tr:active{background:var(--p50)}
 .alert-info{flex:1}
 .alert-name{font-size:12px;font-weight:600}
 .alert-detail{font-size:10px;color:var(--sub)}
+.counsel-card{padding:10px 12px;border-bottom:1px solid var(--bd);display:flex;gap:10px;align-items:flex-start}
+.counsel-badge{min-width:28px;height:28px;border-radius:50%;background:var(--r50);color:var(--r800);font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px}
+.counsel-body{flex:1}
+.counsel-name{font-size:13px;font-weight:700;color:var(--r800);margin-bottom:3px}
+.counsel-reason{font-size:10px;color:var(--sub);line-height:1.6}
 .sel{padding:6px 10px;border:1.5px solid var(--bd);border-radius:8px;font-size:12px;font-family:inherit;background:var(--card);outline:none;color:var(--tx)}
 .sel:focus{border-color:var(--p400)}
 .chart-box{position:relative;width:100%;height:220px}
@@ -197,6 +202,9 @@ table.rk tr:active{background:var(--p50)}
   <div class="ct" id="hm-t">담임반 학생 요약</div>
   <div class="hgrid" id="hm-grid"></div>
  </div>
+ <div class="cd"><div class="ct" style="color:var(--r600)">&#9888; 성적 상담 필요 학생</div>
+  <div style="font-size:10px;color:var(--sub);margin-bottom:8px">평균 1등급 이상 하락 또는 특정 과목 2등급 이상 하락 (직전 시험 대비)</div>
+  <div id="hm-counsel"></div></div>
  <div class="cd"><div class="ct">등급 변동 알림 (2단계 이상)</div><div id="hm-alert"></div></div>
  <div class="cd"><div class="ct">등급 경계 근접 학생</div>
   <div style="font-size:10px;color:var(--sub);margin-bottom:8px">등급 경계에서 1~2점 차이인 학생 (상승 가능)</div>
@@ -460,6 +468,45 @@ function updateCl(){
   document.getElementById('cl-dist').innerHTML=distH;
 }
 
+function updateCounseling(hst,ss){
+  const el=document.getElementById('hm-counsel');if(!el)return;
+  const currIdx=ORD.indexOf(S.exam);
+  if(currIdx<=0){
+    el.innerHTML='<div class="empty">직전 시험 데이터가 없어 비교할 수 없습니다.</div>';return;
+  }
+  const prev=ORD[currIdx-1];
+  const prevSt=(EX[prev]||{data:{}}).data[S.g]||[];
+  const need=[];
+  hst.forEach(cs=>{
+    const ps=prevSt.find(p=>p.name===cs.name&&p.cls===cs.cls);
+    if(!ps)return;
+    const reasons=[];
+    // 평균 등급 1등급 이상 하락
+    const cg=ss.map(sub=>cs[sub]?.grade).filter(g=>g!=null);
+    const pg=ss.map(sub=>ps[sub]?.grade).filter(g=>g!=null);
+    if(cg.length&&pg.length){
+      const ca=cg.reduce((a,b)=>a+b,0)/cg.length;
+      const pa=pg.reduce((a,b)=>a+b,0)/pg.length;
+      if(ca-pa>=1)reasons.push('평균 '+pa.toFixed(1)+'등급 → '+ca.toFixed(1)+'등급 ('+( ca-pa).toFixed(1)+'등급 하락)');
+    }
+    // 특정 과목 2등급 이상 하락
+    ss.forEach(sub=>{
+      const cv=cs[sub],pv=ps[sub];
+      if(!cv||!pv||cv.grade==null||pv.grade==null)return;
+      const drop=cv.grade-pv.grade;
+      if(drop>=2){
+        const nm=cv.sub||(LBL[sub]||sub);
+        reasons.push(nm+' '+pv.grade+'등급 → '+cv.grade+'등급 ('+drop+'등급 하락)');
+      }
+    });
+    if(reasons.length)need.push({name:cs.name,num:cs.num,reasons});
+  });
+  if(!need.length){el.innerHTML='<div class="empty">상담이 필요한 학생이 없습니다.</div>';return;}
+  el.innerHTML=need.map(s=>
+    '<div class="counsel-card"><div class="counsel-badge">!</div><div class="counsel-body"><div class="counsel-name">'+s.name+'</div><div class="counsel-reason">'+s.reasons.map(r=>'• '+r).join('<br>')+'</div></div></div>'
+  ).join('');
+}
+
 function updateHome(){
   const all=allStudents();
   const hst=all.filter(x=>x.cls===S.home).sort((a,b)=>(a.num||0)-(b.num||0));
@@ -499,6 +546,7 @@ function updateHome(){
     }
   }
   
+  try{updateCounseling(hst,ss)}catch(e){console.error('counsel:',e)}
   // Three new analyses
   try{updateBorderStudents(hst,ss)}catch(e){console.error('border:',e)}
   try{updateHeatmap(hst,ss)}catch(e){console.error('heatmap:',e)}
