@@ -759,11 +759,10 @@ function searchAndShow(name){
 function showDetail(i){
   const r=document.getElementById('sr')._r;if(!r)return;
   const s=r[i],ss=subs();
-  document.getElementById('sr').style.display='none';
   const sd=document.getElementById('sd');sd.style.display='block';
   const colors=[,'var(--b50)','var(--b50)','var(--t50)','var(--g50)','var(--a50)','var(--c50)','var(--c50)','var(--r50)','var(--r50)'];
-  
-  let h='<div class="cd"><div class="back" onclick="backSr()">&#8592; 검색으로</div>';
+
+  let h='<div class="cd">';
   h+='<div style="text-align:center;margin-bottom:12px"><div style="font-size:17px;font-weight:700">'+s.name+'</div>';
   h+='<div style="font-size:11px;color:var(--sub)">'+S.g+'학년 '+s.cls+'반 · 총점 '+(s.total||'-')+' · 석차 '+(s.rank||'-')+'</div></div>';
   h+='<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:16px">';
@@ -777,7 +776,7 @@ function showDetail(i){
   
   // Monthly trend chart
   h+='<div class="ct">월별 등급 추이</div>';
-  h+='<div class="chart-box"><canvas id="trend-chart"></canvas></div>';
+  h+='<div class="chart-box" style="height:320px"><canvas id="trend-chart"></canvas></div>';
   h+='</div>';
   sd.innerHTML=h;
 
@@ -798,10 +797,9 @@ function drawTrend(s){
     });
     return{label:(s[sub]&&s[sub].sub)||(LBL[sub]||sub),data,borderColor:colors[idx%5],backgroundColor:colors[idx%5]+'33',tension:.3,pointRadius:5,pointHoverRadius:8,borderWidth:2};
   });
-  CC(el,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,scales:{y:{reverse:true,min:1,max:9,ticks:{stepSize:1,font:{size:9}},grid:{color:'#e8e6df'}},x:{grid:{display:false},ticks:{font:{size:10,family:'Noto Sans KR'}}}},plugins:{legend:{position:'bottom',labels:{font:{size:9,family:'Noto Sans KR'},boxWidth:12}}}}});
+  CC(el,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:12,bottom:4}},scales:{y:{reverse:true,min:0.5,max:9.5,ticks:{stepSize:1,font:{size:11},color:'#73726c'},grid:{color:'#e8e6df'}},x:{grid:{display:false},ticks:{font:{size:12,family:'Noto Sans KR'},color:'#2c2c2a'}}},plugins:{legend:{position:'bottom',labels:{font:{size:11,family:'Noto Sans KR'},boxWidth:14,padding:12}}}}});
 }
 
-function backSr(){document.getElementById('sd').style.display='none';document.getElementById('sr').style.display='block'}
 
 function updateRk(st,gl,clbl){
   const sorted=[...st].sort((a,b)=>(b.total||0)-(a.total||0));
