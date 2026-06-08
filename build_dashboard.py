@@ -63,12 +63,12 @@ def parse_grade1(filepath):
     xl = pd.ExcelFile(filepath)
     sheet = None
     for s in xl.sheet_names:
-        if '성적' in s and '정보' in s:
+        if ('성적' in s and '정보' in s) or '예상점수' in s:
             sheet = s
             break
     if not sheet:
         sheet = xl.sheet_names[0]
-        print(f"  [1학년] '성적 정보' 시트를 찾지 못해 '{sheet}' 사용")
+        print(f"  [1학년] 적절한 시트를 찾지 못해 '{sheet}' 사용")
 
     df = pd.read_excel(filepath, sheet_name=sheet, header=None)
     students = []
