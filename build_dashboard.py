@@ -59,43 +59,79 @@ def safe_str(v):
 
 
 def parse_grade1(filepath):
-    """1학년 파싱: '성적 정보' 시트"""
+    """1학년 파싱: '성적 정보' 또는 '예상점수' 시트"""
     xl = pd.ExcelFile(filepath)
     sheet = None
     for s in xl.sheet_names:
-        if ('성적' in s and '정보' in s) or '예상점수' in s:
+        if '성적' in s and '정보' in s:
             sheet = s
             break
+    if not sheet:
+        for s in xl.sheet_names:
+            if '예상점수' in s:
+                sheet = s
+                break
     if not sheet:
         sheet = xl.sheet_names[0]
         print(f"  [1학년] 적절한 시트를 찾지 못해 '{sheet}' 사용")
 
     df = pd.read_excel(filepath, sheet_name=sheet, header=None)
     students = []
-    # 헤더 2행 (0: 과목명, 1: 원점수/표준점수/백분위/등급)
-    # 데이터는 2행부터
-    for i in range(2, len(df)):
-        r = df.iloc[i]
-        try:
-            cls_val = safe_int(r[1])
-            if cls_val is None: continue
-            s = {
-                "cls": cls_val,
-                "num": safe_int(r[2]) or 0,
-                "name": safe_str(r[3]),
-                "국어": {"score": safe_float(r[4]), "grade": safe_int(r[7])},
-                "수학": {"score": safe_float(r[8]), "grade": safe_int(r[11])},
-                "영어": {"score": safe_float(r[12]), "grade": safe_int(r[15])},
-                "사탐": {"score": safe_float(r[16]), "grade": safe_int(r[19])},
-                "과탐": {"score": safe_float(r[20]), "grade": safe_int(r[23])},
-                "한국사": {"score": safe_float(r[24]), "grade": safe_int(r[27])},
-                "total": safe_float(r[28]),
-                "rank": safe_int(r[29])
-            }
-            if s["name"]:
-                students.append(s)
-        except Exception as e:
-            pass
+
+    if '예상점수' in sheet:
+        # 예상점수 시트: r[0]=반, r[1]=번호, r[2]=성명
+        # r[3]=국어과목명, r[4]=국어점수, r[5]=국어등급
+        # r[6]=수학과목명, r[7]=수학점수, r[8]=수학등급
+        # r[9]=영어점수,   r[10]=영어등급
+        # r[13]=탐구1과목, r[14]=탐구1점수, r[15]=탐구1등급
+        # r[16]=탐구2과목, r[17]=탐구2점수, r[18]=탐구2등급
+        # r[19]=한국사점수, r[20]=한국사등급, r[21]=총점, r[22]=석차
+        for i in range(3, len(df)):
+            r = df.iloc[i]
+            try:
+                cls_val = safe_int(r[0])
+                if cls_val is None: continue
+                s = {
+                    "cls": cls_val,
+                    "num": safe_int(r[1]) or 0,
+                    "name": safe_str(r[2]),
+                    "국어": {"score": safe_float(r[4]), "grade": safe_int(r[5])},
+                    "수학": {"score": safe_float(r[7]), "grade": safe_int(r[8])},
+                    "영어": {"score": safe_float(r[9]), "grade": safe_int(r[10])},
+                    "사탐": {"score": safe_float(r[14]), "grade": safe_int(r[15])},
+                    "과탐": {"score": safe_float(r[17]), "grade": safe_int(r[18])},
+                    "한국사": {"score": safe_float(r[19]), "grade": safe_int(r[20])},
+                    "total": safe_float(r[21]),
+                    "rank": safe_int(r[22])
+                }
+                if s["name"]:
+                    students.append(s)
+            except Exception:
+                pass
+    else:
+        # 성적 정보 시트: r[1]=반, r[2]=번호, r[3]=성명
+        for i in range(2, len(df)):
+            r = df.iloc[i]
+            try:
+                cls_val = safe_int(r[1])
+                if cls_val is None: continue
+                s = {
+                    "cls": cls_val,
+                    "num": safe_int(r[2]) or 0,
+                    "name": safe_str(r[3]),
+                    "국어": {"score": safe_float(r[4]), "grade": safe_int(r[7])},
+                    "수학": {"score": safe_float(r[8]), "grade": safe_int(r[11])},
+                    "영어": {"score": safe_float(r[12]), "grade": safe_int(r[15])},
+                    "사탐": {"score": safe_float(r[16]), "grade": safe_int(r[19])},
+                    "과탐": {"score": safe_float(r[20]), "grade": safe_int(r[23])},
+                    "한국사": {"score": safe_float(r[24]), "grade": safe_int(r[27])},
+                    "total": safe_float(r[28]),
+                    "rank": safe_int(r[29])
+                }
+                if s["name"]:
+                    students.append(s)
+            except Exception:
+                pass
     return students
 
 
