@@ -786,18 +786,20 @@ function showDetail(i){
 function drawTrend(s){
   const el=document.getElementById('trend-chart');if(!el)return;
   const ss=subs().filter(x=>x!=='한국사');
-  const labels=ORD.map(e=>(EX[e]||{}).label||e);
+  // 해당 학년이 응시한 시험만 열로 표시 (예: 1·2학년은 3모·6모)
+  const gord=ORD.filter(e=>((EX[e]||{data:{}}).data[S.g]||[]).length>0);
+  const labels=gord.map(e=>((EX[e]||{}).label||e).replace('월','모'));
   const colors=['#534AB7','#1D9E75','#185FA5','#D85A30','#639922'];
   const datasets=ss.map((sub,idx)=>{
-    const data=ORD.map(e=>{
+    const data=gord.map(e=>{
       const sts=(EX[e]||{data:{}}).data[S.g]||[];
       const found=sts.find(x=>x.name===s.name&&x.cls===s.cls);
       if(!found||!found[sub]||found[sub].grade==null)return null;
       return found[sub].grade;
     });
-    return{label:(s[sub]&&s[sub].sub)||(LBL[sub]||sub),data,borderColor:colors[idx%5],backgroundColor:colors[idx%5]+'33',tension:.3,pointRadius:5,pointHoverRadius:8,borderWidth:2};
+    return{label:(s[sub]&&s[sub].sub)||(LBL[sub]||sub),data,borderColor:colors[idx%5],backgroundColor:colors[idx%5]+'33',tension:.3,pointRadius:5,pointHoverRadius:8,borderWidth:2,spanGaps:true};
   });
-  CC(el,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:12,bottom:4}},scales:{y:{reverse:true,min:0.5,max:9.5,ticks:{stepSize:1,font:{size:11},color:'#73726c'},grid:{color:'#e8e6df'}},x:{grid:{display:false},ticks:{font:{size:12,family:'Noto Sans KR'},color:'#2c2c2a'}}},plugins:{legend:{position:'bottom',labels:{font:{size:11,family:'Noto Sans KR'},boxWidth:14,padding:12}}}}});
+  CC(el,{type:'line',data:{labels,datasets},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:12,bottom:4}},scales:{y:{reverse:true,min:0.5,max:9.5,afterBuildTicks:a=>{a.ticks=[1,2,3,4,5,6,7,8,9].map(v=>({value:v}))},ticks:{font:{size:11},color:'#73726c'},grid:{color:'#e8e6df'}},x:{grid:{display:false},ticks:{font:{size:12,family:'Noto Sans KR'},color:'#2c2c2a'}}},plugins:{legend:{position:'bottom',labels:{font:{size:11,family:'Noto Sans KR'},boxWidth:14,padding:12}}}}});
 }
 
 
